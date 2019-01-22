@@ -6,7 +6,7 @@ import hashlib
 from pwnedapi.__version__ import __version__
 from pwnedapi.exceptions.PasswordException import PasswordException
 from pwnedapi.exceptions.RequestException import RequestException
-from requests.exceptions import Timeout
+from typing import Dict
 
 
 class Password:
@@ -28,7 +28,10 @@ class Password:
 
     DEFAULT_REQUEST_HEADERS = {"User-Agent": USER_AGENT}
 
-    def __init__(self, password: str, request_headers: dict = {}, read_timeout: int = 10) -> None:
+    def __init__(self,
+                 password: str,
+                 request_headers: Dict[str, str] = {},
+                 read_timeout: int = 10) -> None:
 
         if not isinstance(password, str):
             raise PasswordException("Password must be a string.")
@@ -70,9 +73,10 @@ class Password:
         try:
             response = requests.get(
                 url, headers=self.request_headers, timeout=self.read_timeout)
-        except Timeout:
+        except requests.exceptions.Timeout:
             raise RequestException("API request timed out.")
-
+        except requests.exceptions.ConnectionError:
+            raise RequestException("API request failed.")
         if response.status_code != 200 or not response.content:
             raise RequestException("API request failed.")
 
